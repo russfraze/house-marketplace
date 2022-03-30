@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {getAuth, createUserWithEmailAndPassword, updateProfile} from 'firebase/auth'
+import {setDoc, doc, serverTimestamp} from 'firebase/firestore'
 import {db} from '../firebase.config'
 import { ReactComponent as ArrowRightIcon } from '../assets/svg/keyboardArrowRightIcon.svg'
 import visibilityIcon from '../assets/svg/visibilityIcon.svg'
+import { toast } from 'react-toastify'
 
 function SignUp() {
     const [showPassword, setShowPassword] = useState(false)
@@ -42,11 +44,21 @@ function SignUp() {
             updateProfile(auth.currentUser, {
                 displayName: name
             })
+
+            //copy the form data into a new object without changing the sate
+            const formDataCopy = {...formData}
+            //delete the password from the new object 
+            delete formDataCopy.password
+            //add a timestamp to the object
+            formDataCopy.timestamp = serverTimestamp()
+            // update the database and add new user to users collection 
+            await setDoc(doc (db, 'users', user.uid), formDataCopy)
+
             //redirect 
             navigate('/')
 
         } catch (error) {
-           console.log(error); 
+           toast.error('Something went wrong') 
         }
     }
 
